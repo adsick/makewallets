@@ -16,11 +16,13 @@ impl Default for MakeWallets {
 impl MakeWallets {
     //falls when I try to view it.
     //idk should it be payable or not, works without it tho
-    pub fn make_wallets(accounts: Vec<AccountId>, amounts: Vec<U128>) -> Promise {
+    //note we will create normal accounts, not subaccounts in the future, so String will become AccountId
+    pub fn make_wallets(accounts: Vec<String>, amounts: Vec<U128>) -> Promise {
         if accounts.is_empty() {
             env::panic_str("you need to provide account list")
         } else if accounts.len() != amounts.len() {
-            env::panic_str("the length list of initial deposits is not equal to list af accounts") //todo make better message
+            env::panic_str("the length list of initial deposits is not equal to list af accounts")
+            //todo make better message
         }
 
         let accounts = accounts
@@ -32,11 +34,17 @@ impl MakeWallets {
 
         let mut ps: Vec<Promise> = Vec::with_capacity(len);
 
-        for (ac, am) in accounts.zip(amounts){
-            ps.push(Promise::new(ac).create_account().add_full_access_key(env::signer_account_pk()).transfer(am));
+        //what if we change this to simply dropping new promises
+        for (ac, am) in accounts.zip(amounts) {
+            ps.push(
+                Promise::new(ac)
+                    .create_account()
+                    .add_full_access_key(env::signer_account_pk())
+                    .transfer(am),
+            );
         }
-        
-        ps.into_iter().reduce(|a, b|{a.then(b)}).unwrap()
+        //but what do we return then
+        ps.into_iter().reduce(|a, b| a.then(b)).unwrap() //btw this then could be 'and' but I'm not sure
     }
 }
 
